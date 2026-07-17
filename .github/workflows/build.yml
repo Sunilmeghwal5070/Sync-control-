@@ -20,6 +20,27 @@ jobs:
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '9.3.1'
+
+    - name: List files
+      run: ls -la
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew || true
+
+    - name: Download Gradle Wrapper JAR
+      run: |
+        mkdir -p gradle/wrapper
+        curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v9.3.1/gradle/wrapper/gradle-wrapper.jar
+
+    - name: Setup google-services.json
+      run: |
+        if [ ! -f app/google-services.json ]; then
+          echo '{"project_info":{"project_number":"123","project_id":"dummy","storage_bucket":"dummy"},"client":[{"client_info":{"mobilesdk_app_id":"1:123:android:abc","android_client_info":{"package_name":"com.yash.synccontrol"}},"oauth_client":[],"api_key":[{"current_key":"dummy"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}]}' > app/google-services.json
+        else
+          sed -i 's/com.example/com.yash.synccontrol/g' app/google-services.json
+        fi
 
     - name: Generate debug.keystore if missing
       run: |
@@ -28,7 +49,7 @@ jobs:
         fi
 
     - name: Build with Gradle
-      run: gradle assembleDebug
+      run: ./gradlew assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4

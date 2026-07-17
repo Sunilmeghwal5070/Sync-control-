@@ -89,6 +89,19 @@ class AppViewModel(
         }
     }
 
+    suspend fun verifyPairCode(code: String): Boolean {
+        return try {
+            val snapshot = firebaseRepository.verifyConfigExists(code)
+            snapshot
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun initDeviceConfig(code: String) {
+        firebaseRepository.updateConfig(code, DeviceConfig())
+    }
+
     fun pairDevice(role: String, code: String) {
         viewModelScope.launch {
             val deviceName = if (role == "parent") "Child Device ${allPairedDevices.value.size + 1}" else "Child Device"

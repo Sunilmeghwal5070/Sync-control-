@@ -60,6 +60,11 @@ class FirebaseRepository {
         awaitClose { listener.remove() }
     }
 
+    suspend fun verifyConfigExists(pairCode: String): Boolean {
+        val snapshot = db.collection("devices").document(pairCode).get().await()
+        return snapshot.exists()
+    }
+
     suspend fun updateConfig(pairCode: String, config: DeviceConfig) {
         db.collection("devices").document(pairCode).set(config).await()
     }

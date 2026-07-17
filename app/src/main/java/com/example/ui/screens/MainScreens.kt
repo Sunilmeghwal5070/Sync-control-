@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -249,6 +250,12 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
     val allGranted = notifGranted && adminGranted && accessGranted && locationPermissionState.allPermissionsGranted && cameraPermissionState.allPermissionsGranted && overlayGranted
     var showWarning by remember { mutableStateOf(false) }
 
+    androidx.compose.runtime.LaunchedEffect(allGranted) {
+        if (allGranted) {
+            onPermissionsGranted()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -282,8 +289,7 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
                     isGranted = notifGranted,
                     onGrant = { 
                         val intent = android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                        context.startActivity(intent)
-                        notifGranted = true 
+                        try { context.startActivity(intent) } catch(e: Exception) { android.widget.Toast.makeText(context, "Not available on this device", android.widget.Toast.LENGTH_SHORT).show(); notifGranted = true }
                     }
                 )
             }
@@ -293,9 +299,8 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
                     description = "Required to lock/wipe device remotely.",
                     isGranted = adminGranted,
                     onGrant = { 
-                        val intent = android.content.Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS)
-                        context.startActivity(intent)
-                        adminGranted = true 
+                        val intent = android.content.Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply { putExtra(android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN, android.content.ComponentName(context, com.example.services.MyAdminReceiver::class.java)) }
+                        try { context.startActivity(intent) } catch(e: Exception) { android.widget.Toast.makeText(context, "Not available on this device", android.widget.Toast.LENGTH_SHORT).show(); adminGranted = true }
                     }
                 )
             }
@@ -306,8 +311,7 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
                     isGranted = accessGranted,
                     onGrant = { 
                         val intent = android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                        context.startActivity(intent)
-                        accessGranted = true 
+                        try { context.startActivity(intent) } catch(e: Exception) { android.widget.Toast.makeText(context, "Not available on this device", android.widget.Toast.LENGTH_SHORT).show(); accessGranted = true }
                     }
                 )
             }
@@ -333,9 +337,8 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
                     description = "Required for app lock screen overlays.",
                     isGranted = overlayGranted,
                     onGrant = { 
-                        val intent = android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-                        context.startActivity(intent)
-                        overlayGranted = true 
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + context.packageName))
+                        try { context.startActivity(intent) } catch(e: Exception) { android.widget.Toast.makeText(context, "Not available on this device", android.widget.Toast.LENGTH_SHORT).show(); overlayGranted = true }
                     }
                 )
             }
@@ -442,7 +445,7 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(16.dp))
-        Text(if (role == "child") "Get Child's Notification" else "Share Notification", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Text(if (role == "parent") "Get Child's Notification" else "Share Notification", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(24.dp))
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -486,36 +489,56 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("OR", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Enter code of Child's Device", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
-            value = enteredCode,
-            onValueChange = { if (it.length <= 6) enteredCode = it.uppercase() },
-            placeholder = { Text("6-Digit Code", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+        if (role == "parent") {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("OR", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Enter code of Child's Device", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = enteredCode,
+                onValueChange = { if (it.length <= 6) enteredCode = it.uppercase() },
+                placeholder = { Text("6-Digit Code", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                )
             )
-        )
+        }
         Spacer(modifier = Modifier.height(24.dp))
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        var isVerifying by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        
         Button(
             onClick = {
                 val codeToUse = if (role == "child") pairCode else enteredCode
-                viewModel.pairDevice(role, codeToUse)
-                onPaired()
-                if (role == "child") {
-                    val apps = getInstalledApps(context)
-                    viewModel.updateInstalledApps(apps)
+                if (role == "parent") {
+                    isVerifying = true
+                    scope.launch {
+                        val isValid = viewModel.verifyPairCode(codeToUse)
+                        isVerifying = false
+                        if (isValid) {
+                            viewModel.pairDevice(role, codeToUse)
+                            onPaired()
+                        } else {
+                            android.widget.Toast.makeText(context, "Invalid Code! Child must open app and show code first.", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } else {
+                    scope.launch {
+                        viewModel.initDeviceConfig(codeToUse)
+                        viewModel.pairDevice(role, codeToUse)
+                        onPaired()
+                        val apps = getInstalledApps(context)
+                        viewModel.updateInstalledApps(apps)
+                    }
                 }
             },
             modifier = Modifier.width(120.dp).height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            enabled = role == "child" || enteredCode.length == 6
+            enabled = !isVerifying && (role == "child" || enteredCode.length == 6)
         ) {
             Text("Pair", color = MaterialTheme.colorScheme.onPrimary)
         }

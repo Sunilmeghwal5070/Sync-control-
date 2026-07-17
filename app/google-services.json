@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:51353023047:android:6669336d06d06de26d3762",
         "android_client_info": {
-          "package_name": "com.example"
+          "package_name": "com.yash.synccontrol"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "51353023047-f8qi8ans4geqofmqrd2msb5eak0uf30j.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example",
+            "package_name": "com.yash.synccontrol",
             "certificate_hash": "c5822a99694e1de1e73a0ddd186b17af2a10ea3f"
           }
         },
