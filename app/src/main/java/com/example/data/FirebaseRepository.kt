@@ -24,10 +24,18 @@ data class DeviceConfig(
     val cameraAccess: Boolean = true,
     val microphoneAccess: Boolean = true,
     val batteryLevel: Int = 85,
-    val location: LocationData = LocationData(0.0, 0.0)
+    val location: LocationData = LocationData(0.0, 0.0),
+    val installedApps: List<AppInfo> = emptyList()
 )
 
 data class LocationData(val lat: Double = 0.0, val lng: Double = 0.0)
+
+data class AppInfo(
+    val packageName: String = "",
+    val appName: String = "",
+    val isLocked: Boolean = false,
+    val isHidden: Boolean = false
+)
 
 class FirebaseRepository {
     private val db = FirebaseFirestore.getInstance()

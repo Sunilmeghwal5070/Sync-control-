@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > app/src/main/java/com/example/viewmodel/AppViewModel.kt
 package com.example.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -74,21 +76,6 @@ class AppViewModel(
         _selectedPairCode.value = pairCode
     }
 
-    fun disconnectDevice(pairCode: String? = null) {
-        viewModelScope.launch {
-            val codeToDisconnect = pairCode ?: _selectedPairCode.value
-            if (codeToDisconnect != null) {
-                val device = allPairedDevices.value.find { it.pairCode == codeToDisconnect }
-                if (device != null) {
-                    repository.savePairedDevice(device.copy(isConnected = false))
-                }
-                if (pairCode == null || pairCode == _selectedPairCode.value) {
-                    _selectedPairCode.value = null
-                }
-            }
-        }
-    }
-
     fun pairDevice(role: String, code: String) {
         viewModelScope.launch {
             val deviceName = if (role == "parent") "Child Device ${allPairedDevices.value.size + 1}" else "Child Device"
@@ -162,3 +149,4 @@ class AppViewModelFactory(
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
+INNER_EOF

@@ -508,6 +508,10 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                 val codeToUse = if (role == "child") pairCode else enteredCode
                 viewModel.pairDevice(role, codeToUse)
                 onPaired()
+                if (role == "child") {
+                    val apps = getInstalledApps(context)
+                    viewModel.updateInstalledApps(apps)
+                }
             },
             modifier = Modifier.width(120.dp).height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),

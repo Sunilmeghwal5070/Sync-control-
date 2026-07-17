@@ -339,7 +339,9 @@ fun LocationScreen(deviceConfig: DeviceConfig, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RestrictionsScreen(onBack: () -> Unit) {
+fun RestrictionsScreen(deviceConfig: DeviceConfig, onConfigChanged: (DeviceConfig) -> Unit, onBack: () -> Unit) {
+    var showAppLockDialog by remember { mutableStateOf(false) }
+    var showAppHideDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -357,9 +359,9 @@ fun RestrictionsScreen(onBack: () -> Unit) {
                         Text("App Hider & Lock", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
                         Text("Select apps to hide or lock on child's device.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("Manage App Locks") }
+                        Button(onClick = { showAppLockDialog = true }, modifier = Modifier.fillMaxWidth()) { Text("Manage App Locks") }
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = {}, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) { Text("Manage Hidden Apps", color = MaterialTheme.colorScheme.onSurface) }
+                        Button(onClick = { showAppHideDialog = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) { Text("Manage Hidden Apps", color = MaterialTheme.colorScheme.onSurface) }
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -375,19 +377,39 @@ fun RestrictionsScreen(onBack: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            item {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Timer Lock", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
-                        Text("Set screen time limits.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("Set Screen Time Limits") }
+        }
+        
+        if (showAppLockDialog) {
+            AppSelectionDialog(
+                title = "Lock Apps",
+                apps = deviceConfig.installedApps,
+                isHiding = false,
+                onToggle = { app, isLocked ->
+                    val newApps = deviceConfig.installedApps.map {
+                        if (it.packageName == app.packageName) it.copy(isLocked = isLocked) else it
                     }
-                }
-            }
+                    onConfigChanged(deviceConfig.copy(installedApps = newApps))
+                },
+                onDismiss = { showAppLockDialog = false }
+            )
+        }
+        if (showAppHideDialog) {
+            AppSelectionDialog(
+                title = "Hide Apps",
+                apps = deviceConfig.installedApps,
+                isHiding = true,
+                onToggle = { app, isHidden ->
+                    val newApps = deviceConfig.installedApps.map {
+                        if (it.packageName == app.packageName) it.copy(isHidden = isHidden) else it
+                    }
+                    onConfigChanged(deviceConfig.copy(installedApps = newApps))
+                },
+                onDismiss = { showAppHideDialog = false }
+            )
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

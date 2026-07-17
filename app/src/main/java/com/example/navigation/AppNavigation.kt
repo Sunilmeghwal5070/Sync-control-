@@ -103,7 +103,10 @@ fun AppNavigation(viewModel: AppViewModel) {
             )
         }
         composable("restrictions") {
+            val config by viewModel.deviceConfig.collectAsStateWithLifecycle()
             RestrictionsScreen(
+                deviceConfig = config,
+                onConfigChanged = { viewModel.updateConfig(it) },
                 onBack = { navController.popBackStack() }
             )
         }
