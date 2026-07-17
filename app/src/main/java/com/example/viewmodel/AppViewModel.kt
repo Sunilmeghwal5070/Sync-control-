@@ -1,5 +1,8 @@
 package com.example.viewmodel
 
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.tasks.await
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -89,6 +92,25 @@ class AppViewModel(
         }
     }
 
+    suspend fun requestPairing(code: String): kotlinx.coroutines.flow.Flow<DeviceConfig?> = kotlinx.coroutines.flow.callbackFlow {
+        val listener = firebaseRepository.db.collection("devices").document(code).addSnapshotListener { snapshot, error ->
+            if (error != null) return@addSnapshotListener
+            if (snapshot != null && snapshot.exists()) {
+                val config = snapshot.toObject(DeviceConfig::class.java)
+                trySend(config)
+            } else {
+                trySend(null)
+            }
+        }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun setPairingRequest(code: String, requested: Boolean, accepted: Boolean) {
+        firebaseRepository.db.collection("devices").document(code)
+            .update("pairingRequested", requested, "pairingAccepted", accepted)
+            .await()
+    }
+
     suspend fun verifyPairCode(code: String): Boolean {
         return try {
             val snapshot = firebaseRepository.verifyConfigExists(code)
@@ -156,7 +178,7 @@ class AppViewModel(
         val currentTime = System.currentTimeMillis()
         if (currentPairCode == null || currentTime - pairCodeGenerationTime > 10 * 60 * 1000) {
             val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-            currentPairCode = (1..6).map { chars.random() }.joinToString("")
+            currentPairCode = (1..10).map { chars.random() }.joinToString("")
             pairCodeGenerationTime = currentTime
         }
         return currentPairCode!!

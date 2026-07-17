@@ -229,10 +229,30 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
     }
 
     val context = androidx.compose.ui.platform.LocalContext.current
-    var notifGranted by remember { mutableStateOf(false) }
-    var adminGranted by remember { mutableStateOf(false) }
-    var accessGranted by remember { mutableStateOf(false) }
-    var overlayGranted by remember { mutableStateOf(false) }
+    var notifGranted by remember { mutableStateOf(androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)) }
+    var adminGranted by remember { mutableStateOf(
+        (context.getSystemService(android.content.Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager)
+        .isAdminActive(android.content.ComponentName(context, com.example.services.MyAdminReceiver::class.java))
+    ) }
+    var accessGranted by remember { mutableStateOf(
+        try {
+            android.provider.Settings.Secure.getInt(context.contentResolver, android.provider.Settings.Secure.ACCESSIBILITY_ENABLED) == 1
+        } catch (e: Exception) { false }
+    ) }
+    var overlayGranted by remember { mutableStateOf(android.provider.Settings.canDrawOverlays(context)) }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        while(true) {
+            notifGranted = androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
+            adminGranted = (context.getSystemService(android.content.Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager)
+                .isAdminActive(android.content.ComponentName(context, com.example.services.MyAdminReceiver::class.java))
+            accessGranted = try {
+                android.provider.Settings.Secure.getInt(context.contentResolver, android.provider.Settings.Secure.ACCESSIBILITY_ENABLED) == 1
+            } catch (e: Exception) { false }
+            overlayGranted = android.provider.Settings.canDrawOverlays(context)
+            kotlinx.coroutines.delay(1000)
+        }
+    }
 
     val locationPermissionState = com.google.accompanist.permissions.rememberMultiplePermissionsState(
         permissions = listOf(
@@ -497,8 +517,8 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = enteredCode,
-                onValueChange = { if (it.length <= 6) enteredCode = it.uppercase() },
-                placeholder = { Text("6-Digit Code", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
+                onValueChange = { if (it.length <= 10) enteredCode = it.uppercase() },
+                placeholder = { Text("10-Digit Code", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -506,41 +526,86 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                 )
             )
+            Spacer(modifier = Modifier.height(24.dp))
         }
-        Spacer(modifier = Modifier.height(24.dp))
+
         val scope = androidx.compose.runtime.rememberCoroutineScope()
         var isVerifying by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-        
-        Button(
-            onClick = {
-                val codeToUse = if (role == "child") pairCode else enteredCode
-                if (role == "parent") {
+        var showPairingConfirmDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
+        androidx.compose.runtime.LaunchedEffect(role, pairCode) {
+            if (role == "child") {
+                viewModel.initDeviceConfig(pairCode)
+                viewModel.requestPairing(pairCode).collect { config ->
+                    if (config?.pairingRequested == true && config.pairingAccepted == false) {
+                        showPairingConfirmDialog = true
+                    }
+                }
+            }
+        }
+
+        if (showPairingConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { },
+                title = { Text("Pairing Request") },
+                text = { Text("A parent device wants to connect to this device. Allow?") },
+                confirmButton = {
+                    Button(onClick = {
+                        scope.launch {
+                            viewModel.setPairingRequest(pairCode, requested = true, accepted = true)
+                            viewModel.pairDevice(role, pairCode)
+                            onPaired()
+                            val apps = getInstalledApps(context)
+                            viewModel.updateInstalledApps(apps)
+                        }
+                        showPairingConfirmDialog = false
+                    }) {
+                        Text("Accept")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        scope.launch {
+                            viewModel.setPairingRequest(pairCode, requested = false, accepted = false)
+                        }
+                        showPairingConfirmDialog = false
+                    }) {
+                        Text("Reject")
+                    }
+                }
+            )
+        }
+
+        if (role == "parent") {
+            Button(
+                onClick = {
+                    val codeToUse = enteredCode
                     isVerifying = true
                     scope.launch {
                         val isValid = viewModel.verifyPairCode(codeToUse)
-                        isVerifying = false
                         if (isValid) {
-                            viewModel.pairDevice(role, codeToUse)
-                            onPaired()
+                            viewModel.setPairingRequest(codeToUse, requested = true, accepted = false)
+                            viewModel.requestPairing(codeToUse).collect { config ->
+                                if (config?.pairingAccepted == true) {
+                                    viewModel.pairDevice(role, codeToUse)
+                                    onPaired()
+                                } else if (config?.pairingRequested == false) {
+                                    isVerifying = false
+                                    android.widget.Toast.makeText(context, "Pairing rejected by child", android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            }
                         } else {
+                            isVerifying = false
                             android.widget.Toast.makeText(context, "Invalid Code! Child must open app and show code first.", android.widget.Toast.LENGTH_LONG).show()
                         }
                     }
-                } else {
-                    scope.launch {
-                        viewModel.initDeviceConfig(codeToUse)
-                        viewModel.pairDevice(role, codeToUse)
-                        onPaired()
-                        val apps = getInstalledApps(context)
-                        viewModel.updateInstalledApps(apps)
-                    }
-                }
-            },
-            modifier = Modifier.width(120.dp).height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            enabled = !isVerifying && (role == "child" || enteredCode.length == 6)
-        ) {
-            Text("Pair", color = MaterialTheme.colorScheme.onPrimary)
+                },
+                modifier = Modifier.width(200.dp).height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                enabled = !isVerifying && enteredCode.length == 10
+            ) {
+                Text(if (isVerifying) "Waiting for approval..." else "Pair", color = MaterialTheme.colorScheme.onPrimary)
+            }
         }
     }
 }

@@ -25,7 +25,9 @@ data class DeviceConfig(
     val microphoneAccess: Boolean = true,
     val batteryLevel: Int = 85,
     val location: LocationData = LocationData(0.0, 0.0),
-    val installedApps: List<AppInfo> = emptyList()
+    val installedApps: List<AppInfo> = emptyList(),
+    val pairingRequested: Boolean = false,
+    val pairingAccepted: Boolean = false
 )
 
 data class LocationData(val lat: Double = 0.0, val lng: Double = 0.0)
@@ -38,7 +40,7 @@ data class AppInfo(
 )
 
 class FirebaseRepository {
-    private val db = FirebaseFirestore.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
     fun syncDeviceConfig(pairCode: String): Flow<DeviceConfig> = callbackFlow {
         val docRef = db.collection("devices").document(pairCode)
