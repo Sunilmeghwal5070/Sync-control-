@@ -1,0 +1,6 @@
+{
+  "name": "Sync Notifications",
+  "description": "An application to sync notifications across devices.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

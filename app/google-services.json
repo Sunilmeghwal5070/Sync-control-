@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "51353023047",
+    "project_id": "decisive-grail-mjkjx",
+    "storage_bucket": "decisive-grail-mjkjx.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:51353023047:android:6669336d06d06de26d3762",
+        "android_client_info": {
+          "package_name": "com.example"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "51353023047-f8qi8ans4geqofmqrd2msb5eak0uf30j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example",
+            "certificate_hash": "c5822a99694e1de1e73a0ddd186b17af2a10ea3f"
+          }
+        },
+        {
+          "client_id": "51353023047-n438o67583tnaumk6hottj05fh1u8ccu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKIKJkB80y_-Cv_VyTN6QHZF-N-Iqrz4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "51353023047-n438o67583tnaumk6hottj05fh1u8ccu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
