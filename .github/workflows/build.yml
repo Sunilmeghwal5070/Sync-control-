@@ -27,7 +27,7 @@ jobs:
           echo "cGx1Z2lucyB7CiAgYWxpYXMobGlicy5wbHVnaW5zLmFuZHJvaWQuYXBwbGljYXRpb24pIGFwcGx5IGZhbHNlCiAgYWxpYXMobGlicy5wbHVnaW5zLmtvdGxpbi5jb21wb3NlKSBhcHBseSBmYWxzZQogIGFsaWFzKGxpYnMucGx1Z2lucy5nb29nbGUuZGV2dG9vbHMua3NwKSBhcHBseSBmYWxzZQogIGFsaWFzKGxpYnMucGx1Z2lucy5yb2JvcmF6emkpIGFwcGx5IGZhbHNlCiAgYWxpYXMobGlicy5wbHVnaW5zLnNlY3JldHMpIGFwcGx5IGZhbHNlCiAgYWxpYXMobGlicy5wbHVnaW5zLmdvb2dsZS5zZXJ2aWNlcykgYXBwbHkgZmFsc2UKfQo=" | base64 -d > build.gradle.kts
         fi
         if [ ! -f gradle.properties ]; then
-          echo "b3JnLmdyYWRsZS5qdm1hcmdzPS1YbXg0ZyAtRGZpbGUuZW5jb2Rpbmc9VVRGLTgKb3JnLmdyYWRsZS5wYXJhbGxlbD10cnVlCmtvdGxpbi5jb2RlLnN0eWxlPW9mZmljaWFsCmFuZHJvaWQubm9uVHJhbnNpdGl2ZVJDbGFzcz10cnVlCm9yZy5ncmFkbGUuY2FjaGluZz10cnVlCm9yZy5ncmFkbGUuY29uZmlndXJhdGlvbi1jYWNoZT10cnVlCm9yZy5ncmFkbGUud29ya2Vycy5tYXg9NAprb3RsaW4uY29tcGlsZXIuZXhlY3V0aW9uLnN0cmF0ZWd5PWluLXByb2Nlc3MKZ29vZ2xlU2VydmljZXMubWlzc2luZy5wYXNzdGhyb3VnaD10cnVlCg==" | base64 -d > gradle.properties
+          echo "b3JnLmdyYWRsZS5qdm1hcmdzPS1YbXg0ZyAtRGZpbGUuZW5jb2Rpbmc9VVRGLTggLURqYXZhLmF3dC5oZWFkbGVzcz10cnVlCm9yZy5ncmFkbGUucGFyYWxsZWw9dHJ1ZQprb3RsaW4uY29kZS5zdHlsZT1vZmZpY2lhbAphbmRyb2lkLm5vblRyYW5zaXRpdmVSQ2xhc3M9dHJ1ZQpvcmcuZ3JhZGxlLmNhY2hpbmc9dHJ1ZQpvcmcuZ3JhZGxlLmNvbmZpZ3VyYXRpb24tY2FjaGU9dHJ1ZQpvcmcuZ3JhZGxlLndvcmtlcnMubWF4PTQKZ29vZ2xlU2VydmljZXMubWlzc2luZy5wYXNzdGhyb3VnaD10cnVlCg==" | base64 -d > gradle.properties
         fi
         if [ ! -f gradle/libs.versions.toml ]; then
           mkdir -p gradle
@@ -63,6 +63,61 @@ jobs:
         if [ ! -f debug.keystore ]; then
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
         fi
+
+
+    - name: Generate missing XML resources
+      run: |
+        mkdir -p app/src/main/res/xml app/src/main/res/values app/src/main/res/drawable app/src/main/res/mipmap-anydpi-v26
+        
+        cat << 'XML_EOF' > app/src/main/res/xml/data_extraction_rules.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <data-extraction-rules>
+            <cloud-backup><include domain="file" path="."/></cloud-backup>
+        </data-extraction-rules>
+        XML_EOF
+        
+        cat << 'XML_EOF' > app/src/main/res/xml/backup_rules.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <full-backup-content>
+            <include domain="file" path="."/>
+        </full-backup-content>
+        XML_EOF
+        
+        
+        cat << 'XML_EOF' > app/src/main/res/values/strings.xml
+        <resources>
+            <string name="app_name">My Application</string>
+        </resources>
+        XML_EOF
+
+        cat << 'XML_EOF' > app/src/main/res/values/themes.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <resources>
+            <style name="Theme.MyApplication" parent="android:Theme.Material.Light.NoActionBar" />
+        </resources>
+        XML_EOF
+        
+        cat << 'XML_EOF' > app/src/main/res/drawable/ic_launcher_foreground.xml
+        <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+            <path android:fillColor="#3DDC84" android:pathData="M0,0h108v108h-108z" />
+        </vector>
+        XML_EOF
+        
+        cat << 'XML_EOF' > app/src/main/res/drawable/ic_launcher_background.xml
+        <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+            <path android:fillColor="#FFFFFF" android:pathData="M0,0h108v108h-108z" />
+        </vector>
+        XML_EOF
+        
+        cat << 'XML_EOF' > app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+            <background android:drawable="@drawable/ic_launcher_background" />
+            <foreground android:drawable="@drawable/ic_launcher_foreground" />
+        </adaptive-icon>
+        XML_EOF
+        
+        cp app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
 
     - name: Build with Gradle
       run: ./gradlew assembleDebug

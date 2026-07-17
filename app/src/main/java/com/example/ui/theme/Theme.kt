@@ -29,5 +29,5 @@ private val AppColorScheme = darkColorScheme(
 fun MyApplicationTheme(
   content: @Composable () -> Unit,
 ) {
-  MaterialTheme(colorScheme = AppColorScheme, typography = Typography, content = content)
+  MaterialTheme(colorScheme = AppColorScheme, typography = androidx.compose.material3.Typography(), content = content)
 }

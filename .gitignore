@@ -1,0 +1,27 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches/build_file_checksums.ser
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Applet specific
+.build-outputs/
+recreate_root_files.py
+generate_yaml2.py
+fix_build_yml2.py
+fix_strings.py
+
+# Env
+.env
