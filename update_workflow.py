@@ -1,24 +1,8 @@
-name: Build Android APK
+with open('.github/workflows/build.yml', 'r') as f:
+    content = f.read()
 
-on:
-  push:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-
-
+# We need to insert a step before Setup Gradle
+insert_step = """
     - name: Recreate missing root Gradle files
       run: |
         if [ ! -f settings.gradle.kts ]; then
@@ -27,8 +11,8 @@ pluginManagement {
   repositories {
     google {
       content {
-        includeGroupByRegex("com\\.android.*")
-        includeGroupByRegex("com\\.google.*")
+        includeGroupByRegex("com\\\\.android.*")
+        includeGroupByRegex("com\\\\.google.*")
         includeGroupByRegex("androidx.*")
       }
     }
@@ -183,42 +167,9 @@ roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 INNER_EOF
-        fi
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '9.3.1'
+        fi"""
 
-    - name: List files
-      run: ls -la
+content = content.replace("    - name: Setup Gradle", insert_step + "\n    - name: Setup Gradle")
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew || true
-
-    - name: Download Gradle Wrapper JAR
-      run: |
-        mkdir -p gradle/wrapper
-        curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v9.3.1/gradle/wrapper/gradle-wrapper.jar
-
-    - name: Setup google-services.json
-      run: |
-        if [ ! -f app/google-services.json ]; then
-          echo '{"project_info":{"project_number":"123","project_id":"dummy","storage_bucket":"dummy"},"client":[{"client_info":{"mobilesdk_app_id":"1:123:android:abc","android_client_info":{"package_name":"com.yash.synccontrol"}},"oauth_client":[],"api_key":[{"current_key":"dummy"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}]}' > app/google-services.json
-        else
-          sed -i 's/com.example/com.yash.synccontrol/g' app/google-services.json
-        fi
-
-    - name: Generate debug.keystore if missing
-      run: |
-        if [ ! -f debug.keystore ]; then
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-        fi
-
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+with open('.github/workflows/build.yml', 'w') as f:
+    f.write(content)

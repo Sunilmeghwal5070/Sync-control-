@@ -16,7 +16,14 @@ fun AppNavigation(viewModel: AppViewModel) {
     val allPairedDevices by viewModel.allPairedDevices.collectAsStateWithLifecycle()
     val pairedDevice by viewModel.pairedDevice.collectAsStateWithLifecycle()
     
-    NavHost(navController = navController, startDestination = "splash") {
+    NavHost(navController = navController, startDestination = "login") {
+                composable("login") {
+            LoginScreen(onLoginSuccess = {
+                navController.navigate("splash") {
+                    popUpTo("login") { inclusive = true }
+                }
+            })
+        }
         composable("splash") {
             SplashScreen(onNavigateToNext = {
                 if (allPairedDevices.isNotEmpty()) {
