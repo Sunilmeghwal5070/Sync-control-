@@ -17,6 +17,7 @@ fun AppNavigation(viewModel: AppViewModel) {
     val pairedDevice by viewModel.pairedDevice.collectAsStateWithLifecycle()
     
     NavHost(navController = navController, startDestination = "splash") {
+
         
         composable("splash") {
             SplashScreen(onNavigateToNext = {
