@@ -106,8 +106,12 @@ class AppViewModel(
     }
 
     suspend fun setPairingRequest(code: String, requested: Boolean, accepted: Boolean) {
+        val updates = hashMapOf<String, Any>(
+            "pairingRequested" to requested,
+            "pairingAccepted" to accepted
+        )
         firebaseRepository.db.collection("devices").document(code)
-            .update("pairingRequested", requested, "pairingAccepted", accepted)
+            .set(updates, com.google.firebase.firestore.SetOptions.merge())
             .await()
     }
 

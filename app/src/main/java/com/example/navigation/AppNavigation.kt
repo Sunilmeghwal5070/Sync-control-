@@ -18,6 +18,7 @@ fun AppNavigation(viewModel: AppViewModel) {
     
     NavHost(navController = navController, startDestination = "splash") {
 
+
         
         composable("splash") {
             SplashScreen(onNavigateToNext = {

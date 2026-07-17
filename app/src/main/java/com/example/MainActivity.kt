@@ -25,6 +25,15 @@ class MainActivity : ComponentActivity() {
     val repository = AppRepository(database.appDao())
     val firebaseRepository = com.example.data.FirebaseRepository()
     
+    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+    if (auth.currentUser == null) {
+        auth.signInAnonymously().addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                android.util.Log.e("MainActivity", "Anonymous auth failed", task.exception)
+            }
+        }
+    }
+    
     setContent {
       MyApplicationTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

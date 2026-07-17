@@ -558,9 +558,11 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                 if (initErr != null) {
                     android.widget.Toast.makeText(context, "Firebase DB Error on Child: $initErr", android.widget.Toast.LENGTH_LONG).show()
                 }
-                viewModel.requestPairing(pairCode).collect { config ->
-                    if (config?.pairingRequested == true && config.pairingAccepted == false) {
-                        showPairingConfirmDialog = true
+                launch {
+                    viewModel.requestPairing(pairCode).collect { config ->
+                        if (config?.pairingRequested == true && config.pairingAccepted == false) {
+                            showPairingConfirmDialog = true
+                        }
                     }
                 }
             }
@@ -606,14 +608,22 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                     scope.launch {
                         val (isValid, errorMsg) = viewModel.verifyPairCode(codeToUse)
                         if (isValid) {
-                            viewModel.setPairingRequest(codeToUse, requested = true, accepted = false)
-                            viewModel.requestPairing(codeToUse).collect { config ->
-                                if (config?.pairingAccepted == true) {
-                                    viewModel.pairDevice(role, codeToUse)
-                                    onPaired()
-                                } else if (config?.pairingRequested == false) {
-                                    isVerifying = false
-                                    android.widget.Toast.makeText(context, "Pairing rejected by child", android.widget.Toast.LENGTH_LONG).show()
+                            try {
+                                viewModel.setPairingRequest(codeToUse, requested = true, accepted = false)
+                            } catch (e: Exception) {
+                                isVerifying = false
+                                android.widget.Toast.makeText(context, "Pairing request failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                                return@launch
+                            }
+                            scope.launch {
+                                viewModel.requestPairing(codeToUse).collect { config ->
+                                    if (config?.pairingAccepted == true) {
+                                        viewModel.pairDevice(role, codeToUse)
+                                        onPaired()
+                                    } else if (config?.pairingRequested == false) {
+                                        isVerifying = false
+                                        // Wait until user triggers again
+                                    }
                                 }
                             }
                         } else {
