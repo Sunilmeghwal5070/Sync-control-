@@ -62,6 +62,10 @@ fun ParentDashboardScreen(
                 title = {
                     Box {
                             Column {
+                                val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                                if (user != null) {
+                                    Text(user.email ?: "", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                                }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.clickable { expanded = true }

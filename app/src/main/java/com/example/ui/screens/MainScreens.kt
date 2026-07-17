@@ -65,6 +65,16 @@ fun UseCaseScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            if (user != null) {
+                Text(
+                    text = "Signed in as: ${user.email}",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.End)
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
             Text("What's Your Use Case?", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             
@@ -94,6 +104,15 @@ fun ChildDashboard(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            Text(
+                text = "Signed in as: ${user.email}",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                modifier = Modifier.align(Alignment.End)
+            )
+        }
         Spacer(modifier = Modifier.height(32.dp))
         Icon(Icons.Default.Notifications, contentDescription = "Active", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(80.dp))
         Spacer(modifier = Modifier.height(16.dp))

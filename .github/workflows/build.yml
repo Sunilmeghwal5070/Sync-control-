@@ -18,172 +18,22 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-
     - name: Recreate missing root Gradle files
       run: |
         if [ ! -f settings.gradle.kts ]; then
-          cat << 'INNER_EOF' > settings.gradle.kts
-pluginManagement {
-  repositories {
-    google {
-      content {
-        includeGroupByRegex("com\\.android.*")
-        includeGroupByRegex("com\\.google.*")
-        includeGroupByRegex("androidx.*")
-      }
-    }
-    mavenCentral()
-    gradlePluginPortal()
-  }
-}
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
-dependencyResolutionManagement {
-  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-  repositories {
-    google()
-    mavenCentral()
-  }
-}
-rootProject.name = "My Application"
-include(":app")
-INNER_EOF
+          echo "cGx1Z2luTWFuYWdlbWVudCB7CiAgcmVwb3NpdG9yaWVzIHsKICAgIGdvb2dsZSB7CiAgICAgIGNvbnRlbnQgewogICAgICAgIGluY2x1ZGVHcm91cEJ5UmVnZXgoImNvbVxcLmFuZHJvaWQuKiIpCiAgICAgICAgaW5jbHVkZUdyb3VwQnlSZWdleCgiY29tXFwuZ29vZ2xlLioiKQogICAgICAgIGluY2x1ZGVHcm91cEJ5UmVnZXgoImFuZHJvaWR4LioiKQogICAgICB9CiAgICB9CiAgICBtYXZlbkNlbnRyYWwoKQogICAgZ3JhZGxlUGx1Z2luUG9ydGFsKCkKICB9Cn0KcGx1Z2lucyB7IGlkKCJvcmcuZ3JhZGxlLnRvb2xjaGFpbnMuZm9vamF5LXJlc29sdmVyLWNvbnZlbnRpb24iKSB2ZXJzaW9uICIxLjAuMCIgfQpkZXBlbmRlbmN5UmVzb2x1dGlvbk1hbmFnZW1lbnQgewogIHJlcG9zaXRvcmllc01vZGUuc2V0KFJlcG9zaXRvcmllc01vZGUuRkFJTF9PTl9QUk9KRUNUX1JFUE9TKQogIHJlcG9zaXRvcmllcyB7CiAgICBnb29nbGUoKQogICAgbWF2ZW5DZW50cmFsKCkKICB9Cn0Kcm9vdFByb2plY3QubmFtZSA9ICJNeSBBcHBsaWNhdGlvbiIKaW5jbHVkZSgiOmFwcCIpCg==" | base64 -d > settings.gradle.kts
         fi
         if [ ! -f build.gradle.kts ]; then
-          cat << 'INNER_EOF' > build.gradle.kts
-plugins {
-  alias(libs.plugins.android.application) apply false
-  alias(libs.plugins.kotlin.compose) apply false
-  alias(libs.plugins.google.devtools.ksp) apply false
-  alias(libs.plugins.roborazzi) apply false
-  alias(libs.plugins.secrets) apply false
-  alias(libs.plugins.google.services) apply false
-}
-INNER_EOF
+          echo "cGx1Z2lucyB7CiAgYWxpYXMobGlicy5wbHVnaW5zLmFuZHJvaWQuYXBwbGljYXRpb24pIGFwcGx5IGZhbHNlCiAgYWxpYXMobGlicy5wbHVnaW5zLmtvdGxpbi5jb21wb3NlKSBhcHBseSBmYWxzZQogIGFsaWFzKGxpYnMucGx1Z2lucy5nb29nbGUuZGV2dG9vbHMua3NwKSBhcHBseSBmYWxzZQogIGFsaWFzKGxpYnMucGx1Z2lucy5yb2JvcmF6emkpIGFwcGx5IGZhbHNlCiAgYWxpYXMobGlicy5wbHVnaW5zLnNlY3JldHMpIGFwcGx5IGZhbHNlCiAgYWxpYXMobGlicy5wbHVnaW5zLmdvb2dsZS5zZXJ2aWNlcykgYXBwbHkgZmFsc2UKfQo=" | base64 -d > build.gradle.kts
         fi
         if [ ! -f gradle.properties ]; then
-          cat << 'INNER_EOF' > gradle.properties
-org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
-org.gradle.parallel=true
-kotlin.code.style=official
-android.nonTransitiveRClass=true
-org.gradle.caching=true
-org.gradle.configuration-cache=true
-org.gradle.workers.max=4
-kotlin.compiler.execution.strategy=in-process
-googleServices.missing.passthrough=true
-INNER_EOF
+          echo "b3JnLmdyYWRsZS5qdm1hcmdzPS1YbXg0ZyAtRGZpbGUuZW5jb2Rpbmc9VVRGLTgKb3JnLmdyYWRsZS5wYXJhbGxlbD10cnVlCmtvdGxpbi5jb2RlLnN0eWxlPW9mZmljaWFsCmFuZHJvaWQubm9uVHJhbnNpdGl2ZVJDbGFzcz10cnVlCm9yZy5ncmFkbGUuY2FjaGluZz10cnVlCm9yZy5ncmFkbGUuY29uZmlndXJhdGlvbi1jYWNoZT10cnVlCm9yZy5ncmFkbGUud29ya2Vycy5tYXg9NAprb3RsaW4uY29tcGlsZXIuZXhlY3V0aW9uLnN0cmF0ZWd5PWluLXByb2Nlc3MKZ29vZ2xlU2VydmljZXMubWlzc2luZy5wYXNzdGhyb3VnaD10cnVlCg==" | base64 -d > gradle.properties
         fi
         if [ ! -f gradle/libs.versions.toml ]; then
           mkdir -p gradle
-          cat << 'INNER_EOF' > gradle/libs.versions.toml
-[versions]
-agp = "9.1.1"
-coreKtx = "1.18.0"
-junit = "4.13.2"
-junitVersion = "1.3.0"
-espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.8.7"
-lifecycleViewmodelCompose = "2.8.7"
-lifecycleRuntimeCompose = "2.8.7"
-activityCompose = "1.10.1"
-kotlin = "2.2.10"
-composeBom = "2024.09.00"
-googleDevtoolsKsp = "2.3.5"
-navigationCompose = "2.8.9"
-roomRuntime = "2.7.0"
-roomKtx = "2.7.0"
-roomCompiler = "2.7.0"
-kotlinxCoroutinesTest = "1.10.2"
-core = "1.6.1"
-runner = "1.6.2"
-coilCompose = "2.7.0"
-retrofit = "2.12.0"
-converterMoshi = "2.12.0"
-kotlinxCoroutinesAndroid = "1.10.2"
-kotlinxCoroutinesCore = "1.10.2"
-accompanistPermissions = "0.37.3"
-playServicesLocation = "21.3.0"
-cameraCamera2 = "1.5.0"
-cameraLifecycle = "1.5.0"
-cameraView = "1.5.0"
-cameraCore = "1.5.0"
-loggingInterceptor = "4.10.0"
-okhttp = "4.10.0"
-moshiKotlin = "1.15.2"
-moshiKotlinCodegen = "1.15.2"
-datastorePreferences = "1.1.7"
-robolectric = "4.16.1"
-roborazzi = "1.59.0"
-firebaseBom = "34.15.0"
-secretsGradlePlugin = "2.0.1"
-googleServices = "4.5.0"
-credentials = "1.5.0"
-googleid = "1.1.1"
-
-[libraries]
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
-androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
-androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
-androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
-androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
-androidx-core = { group = "androidx.test", name = "core", version.ref = "core" }
-androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
-androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
-androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "converterMoshi" }
-kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
-kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
-accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
-androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraCamera2" }
-androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraLifecycle" }
-androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
-androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraCore" }
-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshiKotlin" }
-moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshiKotlinCodegen" }
-androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
-robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
-roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
-roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
-roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
-firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
-firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
-firebase-appcheck-recaptcha = { group = "com.google.firebase", name = "firebase-appcheck-recaptcha" }
-firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
-firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
-androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
-androidx-credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
-googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
-
-[plugins]
-android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "googleDevtoolsKsp" }
-roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
-secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
-google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
-INNER_EOF
+          echo "W3ZlcnNpb25zXQphZ3AgPSAiOS4xLjEiCmNvcmVLdHggPSAiMS4xOC4wIgpqdW5pdCA9ICI0LjEzLjIiCmp1bml0VmVyc2lvbiA9ICIxLjMuMCIKZXNwcmVzc29Db3JlID0gIjMuNy4wIgpsaWZlY3ljbGVSdW50aW1lS3R4ID0gIjIuOC43IgpsaWZlY3ljbGVWaWV3bW9kZWxDb21wb3NlID0gIjIuOC43IgpsaWZlY3ljbGVSdW50aW1lQ29tcG9zZSA9ICIyLjguNyIKYWN0aXZpdHlDb21wb3NlID0gIjEuMTAuMSIKa290bGluID0gIjIuMi4xMCIKY29tcG9zZUJvbSA9ICIyMDI0LjA5LjAwIgpnb29nbGVEZXZ0b29sc0tzcCA9ICIyLjMuNSIKbmF2aWdhdGlvbkNvbXBvc2UgPSAiMi44LjkiCnJvb21SdW50aW1lID0gIjIuNy4wIgpyb29tS3R4ID0gIjIuNy4wIgpyb29tQ29tcGlsZXIgPSAiMi43LjAiCmtvdGxpbnhDb3JvdXRpbmVzVGVzdCA9ICIxLjEwLjIiCmNvcmUgPSAiMS42LjEiCnJ1bm5lciA9ICIxLjYuMiIKY29pbENvbXBvc2UgPSAiMi43LjAiCnJldHJvZml0ID0gIjIuMTIuMCIKY29udmVydGVyTW9zaGkgPSAiMi4xMi4wIgprb3RsaW54Q29yb3V0aW5lc0FuZHJvaWQgPSAiMS4xMC4yIgprb3RsaW54Q29yb3V0aW5lc0NvcmUgPSAiMS4xMC4yIgphY2NvbXBhbmlzdFBlcm1pc3Npb25zID0gIjAuMzcuMyIKcGxheVNlcnZpY2VzTG9jYXRpb24gPSAiMjEuMy4wIgpjYW1lcmFDYW1lcmEyID0gIjEuNS4wIgpjYW1lcmFMaWZlY3ljbGUgPSAiMS41LjAiCmNhbWVyYVZpZXcgPSAiMS41LjAiCmNhbWVyYUNvcmUgPSAiMS41LjAiCmxvZ2dpbmdJbnRlcmNlcHRvciA9ICI0LjEwLjAiCm9raHR0cCA9ICI0LjEwLjAiCm1vc2hpS290bGluID0gIjEuMTUuMiIKbW9zaGlLb3RsaW5Db2RlZ2VuID0gIjEuMTUuMiIKZGF0YXN0b3JlUHJlZmVyZW5jZXMgPSAiMS4xLjciCnJvYm9sZWN0cmljID0gIjQuMTYuMSIKcm9ib3JhenppID0gIjEuNTkuMCIKZmlyZWJhc2VCb20gPSAiMzQuMTUuMCIKc2VjcmV0c0dyYWRsZVBsdWdpbiA9ICIyLjAuMSIKZ29vZ2xlU2VydmljZXMgPSAiNC41LjAiCmNyZWRlbnRpYWxzID0gIjEuNS4wIgpnb29nbGVpZCA9ICIxLjEuMSIKCltsaWJyYXJpZXNdCmFuZHJvaWR4LWNvcmUta3R4ID0geyBncm91cCA9ICJhbmRyb2lkeC5jb3JlIiwgbmFtZSA9ICJjb3JlLWt0eCIsIHZlcnNpb24ucmVmID0gImNvcmVLdHgiIH0KanVuaXQgPSB7IGdyb3VwID0gImp1bml0IiwgbmFtZSA9ICJqdW5pdCIsIHZlcnNpb24ucmVmID0gImp1bml0IiB9CmFuZHJvaWR4LWp1bml0ID0geyBncm91cCA9ICJhbmRyb2lkeC50ZXN0LmV4dCIsIG5hbWUgPSAianVuaXQiLCB2ZXJzaW9uLnJlZiA9ICJqdW5pdFZlcnNpb24iIH0KYW5kcm9pZHgtZXNwcmVzc28tY29yZSA9IHsgZ3JvdXAgPSAiYW5kcm9pZHgudGVzdC5lc3ByZXNzbyIsIG5hbWUgPSAiZXNwcmVzc28tY29yZSIsIHZlcnNpb24ucmVmID0gImVzcHJlc3NvQ29yZSIgfQphbmRyb2lkeC1saWZlY3ljbGUtcnVudGltZS1rdHggPSB7IGdyb3VwID0gImFuZHJvaWR4LmxpZmVjeWNsZSIsIG5hbWUgPSAibGlmZWN5Y2xlLXJ1bnRpbWUta3R4IiwgdmVyc2lvbi5yZWYgPSAibGlmZWN5Y2xlUnVudGltZUt0eCIgfQphbmRyb2lkeC1saWZlY3ljbGUtdmlld21vZGVsLWNvbXBvc2UgPSB7IGdyb3VwID0gImFuZHJvaWR4LmxpZmVjeWNsZSIsIG5hbWUgPSAibGlmZWN5Y2xlLXZpZXdtb2RlbC1jb21wb3NlIiwgdmVyc2lvbi5yZWYgPSAibGlmZWN5Y2xlVmlld21vZGVsQ29tcG9zZSIgfQphbmRyb2lkeC1saWZlY3ljbGUtcnVudGltZS1jb21wb3NlID0geyBncm91cCA9ICJhbmRyb2lkeC5saWZlY3ljbGUiLCBuYW1lID0gImxpZmVjeWNsZS1ydW50aW1lLWNvbXBvc2UiLCB2ZXJzaW9uLnJlZiA9ICJsaWZlY3ljbGVSdW50aW1lQ29tcG9zZSIgfQphbmRyb2lkeC1hY3Rpdml0eS1jb21wb3NlID0geyBncm91cCA9ICJhbmRyb2lkeC5hY3Rpdml0eSIsIG5hbWUgPSAiYWN0aXZpdHktY29tcG9zZSIsIHZlcnNpb24ucmVmID0gImFjdGl2aXR5Q29tcG9zZSIgfQphbmRyb2lkeC1jb21wb3NlLWJvbSA9IHsgZ3JvdXAgPSAiYW5kcm9pZHguY29tcG9zZSIsIG5hbWUgPSAiY29tcG9zZS1ib20iLCB2ZXJzaW9uLnJlZiA9ICJjb21wb3NlQm9tIiB9CmFuZHJvaWR4LWNvbXBvc2UtdWkgPSB7IGdyb3VwID0gImFuZHJvaWR4LmNvbXBvc2UudWkiLCBuYW1lID0gInVpIiB9CmFuZHJvaWR4LWNvbXBvc2UtdWktZ3JhcGhpY3MgPSB7IGdyb3VwID0gImFuZHJvaWR4LmNvbXBvc2UudWkiLCBuYW1lID0gInVpLWdyYXBoaWNzIiB9CmFuZHJvaWR4LWNvbXBvc2UtdWktdG9vbGluZyA9IHsgZ3JvdXAgPSAiYW5kcm9pZHguY29tcG9zZS51aSIsIG5hbWUgPSAidWktdG9vbGluZyIgfQphbmRyb2lkeC1jb21wb3NlLXVpLXRvb2xpbmctcHJldmlldyA9IHsgZ3JvdXAgPSAiYW5kcm9pZHguY29tcG9zZS51aSIsIG5hbWUgPSAidWktdG9vbGluZy1wcmV2aWV3IiB9CmFuZHJvaWR4LWNvbXBvc2UtdWktdGVzdC1tYW5pZmVzdCA9IHsgZ3JvdXAgPSAiYW5kcm9pZHguY29tcG9zZS51aSIsIG5hbWUgPSAidWktdGVzdC1tYW5pZmVzdCIgfQphbmRyb2lkeC1jb21wb3NlLXVpLXRlc3QtanVuaXQ0ID0geyBncm91cCA9ICJhbmRyb2lkeC5jb21wb3NlLnVpIiwgbmFtZSA9ICJ1aS10ZXN0LWp1bml0NCIgfQphbmRyb2lkeC1uYXZpZ2F0aW9uLWNvbXBvc2UgPSB7IGdyb3VwID0gImFuZHJvaWR4Lm5hdmlnYXRpb24iLCBuYW1lID0gIm5hdmlnYXRpb24tY29tcG9zZSIsIHZlcnNpb24ucmVmID0gIm5hdmlnYXRpb25Db21wb3NlIiB9CmFuZHJvaWR4LXJvb20tcnVudGltZSA9IHsgZ3JvdXAgPSAiYW5kcm9pZHgucm9vbSIsIG5hbWUgPSAicm9vbS1ydW50aW1lIiwgdmVyc2lvbi5yZWYgPSAicm9vbVJ1bnRpbWUiIH0KYW5kcm9pZHgtcm9vbS1rdHggPSB7IGdyb3VwID0gImFuZHJvaWR4LnJvb20iLCBuYW1lID0gInJvb20ta3R4IiwgdmVyc2lvbi5yZWYgPSAicm9vbUt0eCIgfQphbmRyb2lkeC1yb29tLWNvbXBpbGVyID0geyBncm91cCA9ICJhbmRyb2lkeC5yb29tIiwgbmFtZSA9ICJyb29tLWNvbXBpbGVyIiwgdmVyc2lvbi5yZWYgPSAicm9vbUNvbXBpbGVyIiB9CmtvdGxpbngtY29yb3V0aW5lcy10ZXN0ID0geyBncm91cCA9ICJvcmcuamV0YnJhaW5zLmtvdGxpbngiLCBuYW1lID0gImtvdGxpbngtY29yb3V0aW5lcy10ZXN0IiwgdmVyc2lvbi5yZWYgPSAia290bGlueENvcm91dGluZXNUZXN0IiB9CmFuZHJvaWR4LWNvcmUgPSB7IGdyb3VwID0gImFuZHJvaWR4LnRlc3QiLCBuYW1lID0gImNvcmUiLCB2ZXJzaW9uLnJlZiA9ICJjb3JlIiB9CmFuZHJvaWR4LXJ1bm5lciA9IHsgZ3JvdXAgPSAiYW5kcm9pZHgudGVzdCIsIG5hbWUgPSAicnVubmVyIiwgdmVyc2lvbi5yZWYgPSAicnVubmVyIiB9CmFuZHJvaWR4LWNvbXBvc2UtbWF0ZXJpYWwzID0geyBncm91cCA9ICJhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsMyIsIG5hbWUgPSAibWF0ZXJpYWwzIiB9CmFuZHJvaWR4LWNvbXBvc2UtbWF0ZXJpYWwtaWNvbnMtY29yZSA9IHsgZ3JvdXAgPSAiYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbCIsIG5hbWUgPSAibWF0ZXJpYWwtaWNvbnMtY29yZSIgfQphbmRyb2lkeC1jb21wb3NlLW1hdGVyaWFsLWljb25zLWV4dGVuZGVkID0geyBncm91cCA9ICJhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsIiwgbmFtZSA9ICJtYXRlcmlhbC1pY29ucy1leHRlbmRlZCIgfQpjb2lsLWNvbXBvc2UgPSB7IGdyb3VwID0gImlvLmNvaWwta3QiLCBuYW1lID0gImNvaWwtY29tcG9zZSIsIHZlcnNpb24ucmVmID0gImNvaWxDb21wb3NlIiB9CnJldHJvZml0ID0geyBncm91cCA9ICJjb20uc3F1YXJldXAucmV0cm9maXQyIiwgbmFtZSA9ICJyZXRyb2ZpdCIsIHZlcnNpb24ucmVmID0gInJldHJvZml0IiB9CmNvbnZlcnRlci1tb3NoaSA9IHsgZ3JvdXAgPSAiY29tLnNxdWFyZXVwLnJldHJvZml0MiIsIG5hbWUgPSAiY29udmVydGVyLW1vc2hpIiwgdmVyc2lvbi5yZWYgPSAiY29udmVydGVyTW9zaGkiIH0Ka290bGlueC1jb3JvdXRpbmVzLWFuZHJvaWQgPSB7IGdyb3VwID0gIm9yZy5qZXRicmFpbnMua290bGlueCIsIG5hbWUgPSAia290bGlueC1jb3JvdXRpbmVzLWFuZHJvaWQiLCB2ZXJzaW9uLnJlZiA9ICJrb3RsaW54Q29yb3V0aW5lc0FuZHJvaWQiIH0Ka290bGlueC1jb3JvdXRpbmVzLWNvcmUgPSB7IGdyb3VwID0gIm9yZy5qZXRicmFpbnMua290bGlueCIsIG5hbWUgPSAia290bGlueC1jb3JvdXRpbmVzLWNvcmUiLCB2ZXJzaW9uLnJlZiA9ICJrb3RsaW54Q29yb3V0aW5lc0NvcmUiIH0KYWNjb21wYW5pc3QtcGVybWlzc2lvbnMgPSB7IGdyb3VwID0gImNvbS5nb29nbGUuYWNjb21wYW5pc3QiLCBuYW1lID0gImFjY29tcGFuaXN0LXBlcm1pc3Npb25zIiwgdmVyc2lvbi5yZWYgPSAiYWNjb21wYW5pc3RQZXJtaXNzaW9ucyIgfQpwbGF5LXNlcnZpY2VzLWxvY2F0aW9uID0geyBncm91cCA9ICJjb20uZ29vZ2xlLmFuZHJvaWQuZ21zIiwgbmFtZSA9ICJwbGF5LXNlcnZpY2VzLWxvY2F0aW9uIiwgdmVyc2lvbi5yZWYgPSAicGxheVNlcnZpY2VzTG9jYXRpb24iIH0KYW5kcm9pZHgtY2FtZXJhLWNhbWVyYTIgPSB7IGdyb3VwID0gImFuZHJvaWR4LmNhbWVyYSIsIG5hbWUgPSAiY2FtZXJhLWNhbWVyYTIiLCB2ZXJzaW9uLnJlZiA9ICJjYW1lcmFDYW1lcmEyIiB9CmFuZHJvaWR4LWNhbWVyYS1saWZlY3ljbGUgPSB7IGdyb3VwID0gImFuZHJvaWR4LmNhbWVyYSIsIG5hbWUgPSAiY2FtZXJhLWxpZmVjeWNsZSIsIHZlcnNpb24ucmVmID0gImNhbWVyYUxpZmVjeWNsZSIgfQphbmRyb2lkeC1jYW1lcmEtdmlldyA9IHsgZ3JvdXAgPSAiYW5kcm9pZHguY2FtZXJhIiwgbmFtZSA9ICJjYW1lcmEtdmlldyIsIHZlcnNpb24ucmVmID0gImNhbWVyYVZpZXciIH0KYW5kcm9pZHgtY2FtZXJhLWNvcmUgPSB7IGdyb3VwID0gImFuZHJvaWR4LmNhbWVyYSIsIG5hbWUgPSAiY2FtZXJhLWNvcmUiLCB2ZXJzaW9uLnJlZiA9ICJjYW1lcmFDb3JlIiB9CmxvZ2dpbmctaW50ZXJjZXB0b3IgPSB7IGdyb3VwID0gImNvbS5zcXVhcmV1cC5va2h0dHAzIiwgbmFtZSA9ICJsb2dnaW5nLWludGVyY2VwdG9yIiwgdmVyc2lvbi5yZWYgPSAibG9nZ2luZ0ludGVyY2VwdG9yIiB9Cm9raHR0cCA9IHsgZ3JvdXAgPSAiY29tLnNxdWFyZXVwLm9raHR0cDMiLCBuYW1lID0gIm9raHR0cCIsIHZlcnNpb24ucmVmID0gIm9raHR0cCIgfQptb3NoaS1rb3RsaW4gPSB7IGdyb3VwID0gImNvbS5zcXVhcmV1cC5tb3NoaSIsIG5hbWUgPSAibW9zaGkta290bGluIiwgdmVyc2lvbi5yZWYgPSAibW9zaGlLb3RsaW4iIH0KbW9zaGkta290bGluLWNvZGVnZW4gPSB7IGdyb3VwID0gImNvbS5zcXVhcmV1cC5tb3NoaSIsIG5hbWUgPSAibW9zaGkta290bGluLWNvZGVnZW4iLCB2ZXJzaW9uLnJlZiA9ICJtb3NoaUtvdGxpbkNvZGVnZW4iIH0KYW5kcm9pZHgtZGF0YXN0b3JlLXByZWZlcmVuY2VzID0geyBncm91cCA9ICJhbmRyb2lkeC5kYXRhc3RvcmUiLCBuYW1lID0gImRhdGFzdG9yZS1wcmVmZXJlbmNlcyIsIHZlcnNpb24ucmVmID0gImRhdGFzdG9yZVByZWZlcmVuY2VzIiB9CnJvYm9sZWN0cmljID0geyBncm91cCA9ICJvcmcucm9ib2xlY3RyaWMiLCBuYW1lID0gInJvYm9sZWN0cmljIiwgdmVyc2lvbi5yZWYgPSAicm9ib2xlY3RyaWMiIH0Kcm9ib3JhenppID0geyBncm91cCA9ICJpby5naXRodWIudGFrYWhpcm9tLnJvYm9yYXp6aSIsIG5hbWUgPSAicm9ib3JhenppIiwgdmVyc2lvbi5yZWYgPSAicm9ib3JhenppIiB9CnJvYm9yYXp6aS1jb21wb3NlID0geyBncm91cCA9ICJpby5naXRodWIudGFrYWhpcm9tLnJvYm9yYXp6aSIsIG5hbWUgPSAicm9ib3JhenppLWNvbXBvc2UiLCB2ZXJzaW9uLnJlZiA9ICJyb2JvcmF6emkiIH0Kcm9ib3JhenppLWp1bml0LXJ1bGUgPSB7IGdyb3VwID0gImlvLmdpdGh1Yi50YWthaGlyb20ucm9ib3JhenppIiwgbmFtZSA9ICJyb2JvcmF6emktanVuaXQtcnVsZSIsIHZlcnNpb24ucmVmID0gInJvYm9yYXp6aSIgfQpmaXJlYmFzZS1ib20gPSB7IGdyb3VwID0gImNvbS5nb29nbGUuZmlyZWJhc2UiLCBuYW1lID0gImZpcmViYXNlLWJvbSIsIHZlcnNpb24ucmVmID0gImZpcmViYXNlQm9tIiB9CmZpcmViYXNlLWFpID0geyBncm91cCA9ICJjb20uZ29vZ2xlLmZpcmViYXNlIiwgbmFtZSA9ICJmaXJlYmFzZS1haSIgfQpmaXJlYmFzZS1hcHBjaGVjay1yZWNhcHRjaGEgPSB7IGdyb3VwID0gImNvbS5nb29nbGUuZmlyZWJhc2UiLCBuYW1lID0gImZpcmViYXNlLWFwcGNoZWNrLXJlY2FwdGNoYSIgfQpmaXJlYmFzZS1maXJlc3RvcmUgPSB7IGdyb3VwID0gImNvbS5nb29nbGUuZmlyZWJhc2UiLCBuYW1lID0gImZpcmViYXNlLWZpcmVzdG9yZSIgfQpmaXJlYmFzZS1hdXRoID0geyBncm91cCA9ICJjb20uZ29vZ2xlLmZpcmViYXNlIiwgbmFtZSA9ICJmaXJlYmFzZS1hdXRoIiB9CmFuZHJvaWR4LWNyZWRlbnRpYWxzID0geyBncm91cCA9ICJhbmRyb2lkeC5jcmVkZW50aWFscyIsIG5hbWUgPSAiY3JlZGVudGlhbHMiLCB2ZXJzaW9uLnJlZiA9ICJjcmVkZW50aWFscyIgfQphbmRyb2lkeC1jcmVkZW50aWFscy1wbGF5LXNlcnZpY2VzID0geyBncm91cCA9ICJhbmRyb2lkeC5jcmVkZW50aWFscyIsIG5hbWUgPSAiY3JlZGVudGlhbHMtcGxheS1zZXJ2aWNlcy1hdXRoIiwgdmVyc2lvbi5yZWYgPSAiY3JlZGVudGlhbHMiIH0KZ29vZ2xlaWQgPSB7IGdyb3VwID0gImNvbS5nb29nbGUuYW5kcm9pZC5saWJyYXJpZXMuaWRlbnRpdHkuZ29vZ2xlaWQiLCBuYW1lID0gImdvb2dsZWlkIiwgdmVyc2lvbi5yZWYgPSAiZ29vZ2xlaWQiIH0KCltwbHVnaW5zXQphbmRyb2lkLWFwcGxpY2F0aW9uID0geyBpZCA9ICJjb20uYW5kcm9pZC5hcHBsaWNhdGlvbiIsIHZlcnNpb24ucmVmID0gImFncCIgfQprb3RsaW4tY29tcG9zZSA9IHsgaWQgPSAib3JnLmpldGJyYWlucy5rb3RsaW4ucGx1Z2luLmNvbXBvc2UiLCB2ZXJzaW9uLnJlZiA9ICJrb3RsaW4iIH0KZ29vZ2xlLWRldnRvb2xzLWtzcCA9IHsgaWQgPSAiY29tLmdvb2dsZS5kZXZ0b29scy5rc3AiLCB2ZXJzaW9uLnJlZiA9ICJnb29nbGVEZXZ0b29sc0tzcCIgfQpyb2JvcmF6emkgPSB7IGlkID0gImlvLmdpdGh1Yi50YWthaGlyb20ucm9ib3JhenppIiwgdmVyc2lvbi5yZWYgPSAicm9ib3JhenppIiB9CnNlY3JldHMgPSB7IGlkID0gImNvbS5nb29nbGUuYW5kcm9pZC5saWJyYXJpZXMubWFwc3BsYXRmb3JtLnNlY3JldHMtZ3JhZGxlLXBsdWdpbiIsIHZlcnNpb24ucmVmID0gInNlY3JldHNHcmFkbGVQbHVnaW4iIH0KZ29vZ2xlLXNlcnZpY2VzID0geyBpZCA9ICJjb20uZ29vZ2xlLmdtcy5nb29nbGUtc2VydmljZXMiLCB2ZXJzaW9uLnJlZiA9ICJnb29nbGVTZXJ2aWNlcyIgfQo=" | base64 -d > gradle/libs.versions.toml
         fi
+
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
       with:
