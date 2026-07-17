@@ -554,7 +554,10 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
 
         androidx.compose.runtime.LaunchedEffect(role, pairCode) {
             if (role == "child") {
-                viewModel.initDeviceConfig(pairCode)
+                val initErr = viewModel.initDeviceConfig(pairCode)
+                if (initErr != null) {
+                    android.widget.Toast.makeText(context, "Firebase DB Error on Child: $initErr", android.widget.Toast.LENGTH_LONG).show()
+                }
                 viewModel.requestPairing(pairCode).collect { config ->
                     if (config?.pairingRequested == true && config.pairingAccepted == false) {
                         showPairingConfirmDialog = true
@@ -601,7 +604,7 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                     val codeToUse = enteredCode
                     isVerifying = true
                     scope.launch {
-                        val isValid = viewModel.verifyPairCode(codeToUse)
+                        val (isValid, errorMsg) = viewModel.verifyPairCode(codeToUse)
                         if (isValid) {
                             viewModel.setPairingRequest(codeToUse, requested = true, accepted = false)
                             viewModel.requestPairing(codeToUse).collect { config ->
@@ -615,7 +618,11 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                             }
                         } else {
                             isVerifying = false
-                            android.widget.Toast.makeText(context, "Invalid Code! Child must open app and show code first.", android.widget.Toast.LENGTH_LONG).show()
+                            if (errorMsg != null) {
+                                android.widget.Toast.makeText(context, "Firebase Error: $errorMsg", android.widget.Toast.LENGTH_LONG).show()
+                            } else {
+                                android.widget.Toast.makeText(context, "Invalid Code! Child must open app and show code first.", android.widget.Toast.LENGTH_LONG).show()
+                            }
                         }
                     }
                 },

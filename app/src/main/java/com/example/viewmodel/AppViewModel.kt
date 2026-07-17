@@ -111,21 +111,17 @@ class AppViewModel(
             .await()
     }
 
-    suspend fun verifyPairCode(code: String): Boolean {
-        return try {
-            val snapshot = firebaseRepository.verifyConfigExists(code)
-            snapshot
-        } catch (e: Exception) {
-            android.util.Log.e("AppViewModel", "verifyPairCode error", e)
-            false
-        }
+    suspend fun verifyPairCode(code: String): Pair<Boolean, String?> {
+        return firebaseRepository.verifyConfigExists(code)
     }
 
-    suspend fun initDeviceConfig(code: String) {
-        try {
+    suspend fun initDeviceConfig(code: String): String? {
+        return try {
             firebaseRepository.updateConfig(code, DeviceConfig())
+            null
         } catch (e: Exception) {
             android.util.Log.e("AppViewModel", "initDeviceConfig error", e)
+            e.message
         }
     }
 
