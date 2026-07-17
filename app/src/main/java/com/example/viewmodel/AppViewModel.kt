@@ -154,7 +154,7 @@ class AppViewModel(
                 val mergedApps = apps.map { newApp ->
                     val existing = currentApps.find { it.packageName == newApp.packageName }
                     if (existing != null) {
-                        newApp.copy(isLocked = existing.isLocked, isHidden = existing.isHidden)
+                        newApp.copy(isLocked = existing.isLocked, isHidden = existing.isHidden, notificationsEnabled = existing.notificationsEnabled)
                     } else {
                         newApp
                     }
@@ -169,6 +169,11 @@ class AppViewModel(
     fun sendNotification(appName: String, content: String) {
         val currentDevice = allPairedDevices.value.firstOrNull { it.role == "child" }
         if (currentDevice != null && currentDevice.isConnected) {
+            val appInfo = _deviceConfig.value.installedApps.find { it.appName.equals(appName, ignoreCase = true) || it.packageName == appName }
+            if (appInfo != null && !appInfo.notificationsEnabled) {
+                // Notifications for this app are disabled by the parent/child
+                return
+            }
             viewModelScope.launch {
                 val log = NotificationLog(appName = appName, content = content, timestamp = System.currentTimeMillis())
                 firebaseRepository.sendNotification(currentDevice.pairCode, log)

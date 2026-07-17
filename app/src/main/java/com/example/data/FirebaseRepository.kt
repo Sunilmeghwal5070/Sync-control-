@@ -36,7 +36,8 @@ data class AppInfo(
     val packageName: String = "",
     val appName: String = "",
     val isLocked: Boolean = false,
-    val isHidden: Boolean = false
+    val isHidden: Boolean = false,
+    val notificationsEnabled: Boolean = true
 )
 
 class FirebaseRepository {

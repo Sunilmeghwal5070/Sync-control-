@@ -14,6 +14,9 @@ interface AppDao {
     @Query("SELECT * FROM paired_devices")
     fun getAllPairedDevices(): Flow<List<PairedDevice>>
 
+    @Query("SELECT * FROM paired_devices")
+    suspend fun getPairedDevicesSync(): List<PairedDevice>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun savePairedDevice(device: PairedDevice)
 

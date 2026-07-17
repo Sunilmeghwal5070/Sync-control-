@@ -1,33 +1,28 @@
 package com.example.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 
-private val AppColorScheme = darkColorScheme(
-    primary = LightPurple,
-    secondary = AccentPurple,
-    tertiary = DeepPurple,
-    background = DarkBackground,
-    surface = DarkSurface,
-    surfaceVariant = DarkSurfaceVariant,
+private val AppLightColorScheme = lightColorScheme(
+    primary = PurplePrimary,
     onPrimary = Color.White,
+    secondary = PurpleSecondary,
     onSecondary = Color.White,
+    tertiary = PurpleTertiary,
     onTertiary = Color.White,
-    onBackground = LightText,
-    onSurface = LightText
+    background = LightBackground,
+    onBackground = DarkText,
+    surface = LightSurface,
+    onSurface = DarkText,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = DarkText
 )
 
 @Composable
 fun MyApplicationTheme(
   content: @Composable () -> Unit,
 ) {
-  MaterialTheme(colorScheme = AppColorScheme, typography = androidx.compose.material3.Typography(), content = content)
+  MaterialTheme(colorScheme = AppLightColorScheme, typography = androidx.compose.material3.Typography(), content = content)
 }
