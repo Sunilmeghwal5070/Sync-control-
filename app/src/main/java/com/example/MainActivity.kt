@@ -23,11 +23,17 @@ class MainActivity : ComponentActivity() {
     
     val database = AppDatabase.getDatabase(this)
     val repository = AppRepository(database.appDao())
-    val firebaseRepository = com.example.data.FirebaseRepository()
+    val firebaseRepository: com.example.data.FirebaseRepository? = try {
+        com.example.data.FirebaseRepository()
+    } catch (e: Exception) {
+        android.util.Log.e("MainActivity", "Firebase init failed", e)
+        android.widget.Toast.makeText(this, "Firebase Init Failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+        null
+    }
     
     val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
-    if (auth.currentUser == null) {
-        auth.signInAnonymously().addOnCompleteListener { task ->
+    if (auth?.currentUser == null) {
+        auth?.signInAnonymously()?.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
                 android.util.Log.e("MainActivity", "Anonymous auth failed", task.exception)
             }
@@ -37,9 +43,9 @@ class MainActivity : ComponentActivity() {
     setContent {
       MyApplicationTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-          androidx.compose.foundation.layout.Box(modifier = Modifier.padding(innerPadding)) {
+          androidx.compose.foundation.layout.Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             val viewModel: AppViewModel = viewModel(
-                factory = AppViewModelFactory(repository, firebaseRepository)
+                factory = AppViewModelFactory(repository, firebaseRepository ?: com.example.data.FirebaseRepository())
             )
             AppNavigation(viewModel)
           }

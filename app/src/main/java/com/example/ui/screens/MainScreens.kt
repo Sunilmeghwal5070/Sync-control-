@@ -55,7 +55,7 @@ fun UseCaseScreen(
             pairCode = pairedDevice.pairCode,
             deviceConfig = deviceConfig,
             onSendMockNotification = { app, msg -> viewModel.sendNotification(app, msg) },
-            onUpdateAppStatus = { updatedApps -> viewModel.updateInstalledApps(updatedApps) },
+            onUpdateAppStatus = { updatedApps -> viewModel.updateConfig(deviceConfig.copy(installedApps = updatedApps)) },
             onDisconnect = onDisconnect
         )
     } else {
@@ -83,8 +83,6 @@ fun UseCaseScreen(
             
             UseCaseCard(title = "Parent / Child", onClick = onNavigateToRoleSelection)
             Spacer(modifier = Modifier.height(24.dp))
-            UseCaseCard(title = "Business / Other", onClick = onNavigateToRoleSelection)
-            
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -167,7 +165,7 @@ fun ChildDashboard(
                 onDismissRequest = { showNotificationSettings = false },
                 title = { Text("App Notification Settings") },
                 text = {
-                    LazyColumn {
+                    LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                         items(deviceConfig.installedApps) { app ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -305,6 +303,7 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
         } catch (e: Exception) { false }
     ) }
     var overlayGranted by remember { mutableStateOf(android.provider.Settings.canDrawOverlays(context)) }
+    var writeSettingsGranted by remember { mutableStateOf(android.provider.Settings.System.canWrite(context)) }
 
     androidx.compose.runtime.LaunchedEffect(Unit) {
         while(true) {
@@ -315,6 +314,7 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
                 android.provider.Settings.Secure.getInt(context.contentResolver, android.provider.Settings.Secure.ACCESSIBILITY_ENABLED) == 1
             } catch (e: Exception) { false }
             overlayGranted = android.provider.Settings.canDrawOverlays(context)
+            writeSettingsGranted = android.provider.Settings.System.canWrite(context)
             kotlinx.coroutines.delay(1000)
         }
     }
@@ -332,9 +332,10 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
         )
     )
 
-    val allGranted = notifGranted && adminGranted && accessGranted && locationPermissionState.allPermissionsGranted && cameraPermissionState.allPermissionsGranted && overlayGranted
+    val allGranted = notifGranted && adminGranted && accessGranted && locationPermissionState.allPermissionsGranted && cameraPermissionState.allPermissionsGranted && overlayGranted && writeSettingsGranted
     var showWarning by remember { mutableStateOf(false) }
 
+    // Auto-proceed if all granted, but user can also click continue manually
     androidx.compose.runtime.LaunchedEffect(allGranted) {
         if (allGranted) {
             onPermissionsGranted()
@@ -427,6 +428,17 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
                     }
                 )
             }
+            item {
+                PermissionItem(
+                    title = "Modify System Settings",
+                    description = "Required to control WiFi, brightness, etc.",
+                    isGranted = writeSettingsGranted,
+                    onGrant = { 
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, android.net.Uri.parse("package:" + context.packageName))
+                        try { context.startActivity(intent) } catch(e: Exception) { android.widget.Toast.makeText(context, "Not available on this device", android.widget.Toast.LENGTH_SHORT).show(); writeSettingsGranted = true }
+                    }
+                )
+            }
         }
 
         if (showWarning) {
@@ -440,22 +452,19 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
 
         Button(
             onClick = {
-                if (allGranted) {
-                    onPermissionsGranted()
-                } else {
-                    showWarning = true
-                }
+                // Allow proceed even if some permissions like overlay are denied on Android Go
+                onPermissionsGranted()
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
                 .height(50.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (allGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = if (allGranted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {
-            Text("Continue")
+            Text("Continue (Skip Optional)")
         }
     }
 }
@@ -602,7 +611,7 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
             if (role == "child") {
                 val initErr = viewModel.initDeviceConfig(pairCode)
                 if (initErr != null) {
-                    android.widget.Toast.makeText(context, "Firebase DB Error on Child: $initErr", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(context, "Firebase DB Error: $initErr. Enable Firestore Database & Anonymous Auth in Firebase Console.", android.widget.Toast.LENGTH_LONG).show()
                 }
                 launch {
                     viewModel.requestPairing(pairCode).collect { config ->
@@ -658,7 +667,7 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                                 viewModel.setPairingRequest(codeToUse, requested = true, accepted = false)
                             } catch (e: Exception) {
                                 isVerifying = false
-                                android.widget.Toast.makeText(context, "Pairing request failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                                android.widget.Toast.makeText(context, "Pairing failed: ${e.message}. Enable Firestore Database in Firebase Console.", android.widget.Toast.LENGTH_LONG).show()
                                 return@launch
                             }
                             scope.launch {
@@ -675,7 +684,7 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                         } else {
                             isVerifying = false
                             if (errorMsg != null) {
-                                android.widget.Toast.makeText(context, "Firebase Error: $errorMsg", android.widget.Toast.LENGTH_LONG).show()
+                                android.widget.Toast.makeText(context, "Firebase Error: $errorMsg. Enable Firestore Database & Anonymous Auth in Firebase Console.", android.widget.Toast.LENGTH_LONG).show()
                             } else {
                                 android.widget.Toast.makeText(context, "Invalid Code! Child must open app and show code first.", android.widget.Toast.LENGTH_LONG).show()
                             }
@@ -724,7 +733,7 @@ fun MyNotificationsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                 onDismissRequest = { showNotificationSettings = false },
                 title = { Text("App Notification Settings") },
                 text = {
-                    LazyColumn {
+                    LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                         items(deviceConfig.installedApps) { app ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -738,7 +747,7 @@ fun MyNotificationsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                                         val updatedList = deviceConfig.installedApps.map {
                                             if (it.packageName == app.packageName) it.copy(notificationsEnabled = isEnabled) else it
                                         }
-                                        viewModel.updateInstalledApps(updatedList)
+                                        viewModel.updateConfig(deviceConfig.copy(installedApps = updatedList))
                                     }
                                 )
                             }

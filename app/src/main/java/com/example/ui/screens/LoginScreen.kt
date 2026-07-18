@@ -22,7 +22,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
     // Check if already logged in
     LaunchedEffect(Unit) {
-        val auth = FirebaseAuth.getInstance()
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             onLoginSuccess()
         } else {
@@ -62,7 +62,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                                 FirebaseAuth.getInstance().signInAnonymously().await()
                                 onLoginSuccess()
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Login Failed. Check connection.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Login Failed: ${e.message}. Please enable Anonymous Authentication in Firebase Console.", Toast.LENGTH_LONG).show()
                             } finally {
                                 isLoading = false
                             }
