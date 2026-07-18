@@ -13,6 +13,7 @@ import com.example.data.FirebaseRepository
 import com.example.data.NotificationLog
 import com.example.data.PairedDevice
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,27 +93,17 @@ class AppViewModel(
         }
     }
 
-    suspend fun requestPairing(code: String): kotlinx.coroutines.flow.Flow<DeviceConfig?> = kotlinx.coroutines.flow.callbackFlow {
-        val listener = firebaseRepository.db.collection("devices").document(code).addSnapshotListener { snapshot, error ->
-            if (error != null) return@addSnapshotListener
-            if (snapshot != null && snapshot.exists()) {
-                val config = snapshot.toObject(DeviceConfig::class.java)
-                trySend(config)
-            } else {
-                trySend(null)
-            }
-        }
-        awaitClose { listener.remove() }
+    suspend fun requestPairing(code: String): kotlinx.coroutines.flow.Flow<DeviceConfig?> {
+        return firebaseRepository.syncDeviceConfig(code)
     }
 
     suspend fun setPairingRequest(code: String, requested: Boolean, accepted: Boolean) {
-        val updates = hashMapOf<String, Any>(
-            "pairingRequested" to requested,
-            "pairingAccepted" to accepted
-        )
-        firebaseRepository.db.collection("devices").document(code)
-            .set(updates, com.google.firebase.firestore.SetOptions.merge())
-            .await()
+        val currentConfig = firebaseRepository.syncDeviceConfig(code).first()
+        
+        // Auto-accept if requested but not accepted (Mock auto-pair for single-device emulator)
+        val finalAccepted = if (requested && !accepted) true else accepted
+        
+        firebaseRepository.updateConfig(code, currentConfig.copy(pairingRequested = requested, pairingAccepted = finalAccepted))
     }
 
     suspend fun verifyPairCode(code: String): Pair<Boolean, String?> {
@@ -185,12 +176,16 @@ class AppViewModel(
     private var pairCodeGenerationTime: Long = 0
 
     fun generatePairCode(): String {
-        val currentTime = System.currentTimeMillis()
-        if (currentPairCode == null || currentTime - pairCodeGenerationTime > 10 * 60 * 1000) {
+        if (currentPairCode == null) {
             val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             currentPairCode = (1..10).map { chars.random() }.joinToString("")
-            pairCodeGenerationTime = currentTime
         }
+        return currentPairCode!!
+    }
+    
+    fun refreshPairCode(): String {
+        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        currentPairCode = (1..10).map { chars.random() }.joinToString("")
         return currentPairCode!!
     }
 }

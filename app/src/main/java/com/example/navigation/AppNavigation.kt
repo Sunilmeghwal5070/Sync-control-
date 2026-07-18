@@ -56,8 +56,8 @@ fun AppNavigation(viewModel: AppViewModel) {
                 pairedDevice = currentChildDevice,
                 hasParentRole = hasParentRole,
                 viewModel = viewModel,
-                onNavigateToRoleSelection = {
-                    navController.navigate("role_selection")
+                onNavigateToRole = { role ->
+                    navController.navigate("permissions/$role")
                 },
                 onNavigateToParentDashboard = {
                     navController.navigate("parent_dashboard")
@@ -86,7 +86,7 @@ fun AppNavigation(viewModel: AppViewModel) {
                     }
                 },
                 onAddDevice = {
-                    navController.navigate("role_selection")
+                    navController.navigate("permissions/child")
                 }
             )
         }
@@ -121,13 +121,7 @@ fun AppNavigation(viewModel: AppViewModel) {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable("role_selection") {
-            RoleSelectionScreen(
-                onRoleSelected = { role ->
-                    navController.navigate("permissions/$role")
-                }
-            )
-        }
+
         composable("permissions/{role}") { backStackEntry ->
             val role = backStackEntry.arguments?.getString("role") ?: "child"
             PermissionScreen(role = role, onPermissionsGranted = {
@@ -140,9 +134,10 @@ fun AppNavigation(viewModel: AppViewModel) {
                 role = role, 
                 viewModel = viewModel,
                 onPaired = {
-                    navController.navigate("use_case") {
-                        popUpTo("role_selection") { inclusive = true }
-                    }
+                    navController.popBackStack("use_case", inclusive = false)
+                },
+                onBack = {
+                    navController.popBackStack("use_case", inclusive = false)
                 }
             )
         }
@@ -150,7 +145,7 @@ fun AppNavigation(viewModel: AppViewModel) {
             MyNotificationsScreen(
                 viewModel = viewModel,
                 onBack = {
-                    navController.popBackStack()
+                    navController.popBackStack("use_case", inclusive = false)
                 }
             )
         }

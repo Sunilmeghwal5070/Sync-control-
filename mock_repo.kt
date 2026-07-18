@@ -5,39 +5,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.delay
 
-data class DeviceConfig(
-    val wifi: Boolean = false,
-    val bluetooth: Boolean = false,
-    val flashlight: Boolean = false,
-    val hotspot: Boolean = false,
-    val ringerMode: Int = 2, // 0 = silent, 1 = vibrate, 2 = normal
-    val volume: Int = 50,
-    val brightness: Int = 100,
-    val lock: Boolean = false,
-    val aeroplaneMode: Boolean = false,
-    val screenshotRequested: Boolean = false,
-    val batterySaver: Boolean = false,
-    val dndMode: Boolean = false,
-    val screenTimeout: Int = 30,
-    val cameraAccess: Boolean = true,
-    val microphoneAccess: Boolean = true,
-    val batteryLevel: Int = 85,
-    val location: LocationData = LocationData(0.0, 0.0),
-    val installedApps: List<AppInfo> = emptyList(),
-    val pairingRequested: Boolean = false,
-    val pairingAccepted: Boolean = false
-)
-
-data class LocationData(val lat: Double = 0.0, val lng: Double = 0.0)
-
-data class AppInfo(
-    val packageName: String = "",
-    val appName: String = "",
-    val isLocked: Boolean = false,
-    val isHidden: Boolean = false,
-    val notificationsEnabled: Boolean = true
-)
-
 object MockDatabase {
     val devices = mutableMapOf<String, MutableStateFlow<DeviceConfig>>()
     val notifications = mutableMapOf<String, MutableStateFlow<List<NotificationLog>>>()
@@ -58,11 +25,8 @@ class FirebaseRepository {
 
     suspend fun verifyConfigExists(pairCode: String): Pair<Boolean, String?> {
         delay(500) // Simulate network
-        // ALWAYS return true to simulate successful pairing even if child device is on another instance
-        if (!MockDatabase.devices.containsKey(pairCode)) {
-             MockDatabase.devices[pairCode] = kotlinx.coroutines.flow.MutableStateFlow(DeviceConfig(pairingAccepted = true))
-        }
-        return Pair(true, null)
+        val exists = MockDatabase.devices.containsKey(pairCode)
+        return if (exists) Pair(true, null) else Pair(false, "Invalid Pair Code or Child disconnected")
     }
 
     suspend fun updateConfig(pairCode: String, config: DeviceConfig) {

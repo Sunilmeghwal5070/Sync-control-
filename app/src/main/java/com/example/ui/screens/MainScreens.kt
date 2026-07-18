@@ -40,7 +40,7 @@ fun UseCaseScreen(
     pairedDevice: PairedDevice?,
     hasParentRole: Boolean,
     viewModel: AppViewModel,
-    onNavigateToRoleSelection: () -> Unit,
+    onNavigateToRole: (String) -> Unit,
     onNavigateToParentDashboard: () -> Unit,
     onDisconnect: () -> Unit
 ) {
@@ -66,8 +66,8 @@ fun UseCaseScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            if (user != null) {
+            val user = try { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser } catch(e: Exception) { null }
+            if (user?.email != null) {
                 Text(
                     text = "Signed in as: ${user.email}",
                     fontSize = 14.sp,
@@ -77,12 +77,14 @@ fun UseCaseScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text("What's Your Use Case?", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text("Who Uses This Device?", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             
+            Spacer(modifier = Modifier.height(48.dp))
+            
+            UseCaseCard(title = "Parent", icon = androidx.compose.material.icons.Icons.Filled.AdminPanelSettings, onClick = { onNavigateToRole("parent") })
             Spacer(modifier = Modifier.height(32.dp))
+            UseCaseCard(title = "Child", icon = androidx.compose.material.icons.Icons.Filled.ChildCare, onClick = { onNavigateToRole("child") })
             
-            UseCaseCard(title = "Parent / Child", onClick = onNavigateToRoleSelection)
-            Spacer(modifier = Modifier.height(24.dp))
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -104,8 +106,8 @@ fun ChildDashboard(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-        if (user != null) {
+        val user = try { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser } catch (e: Exception) { null }
+        if (user?.email != null) {
             Text(
                 text = "Signed in as: ${user.email}",
                 fontSize = 14.sp,
@@ -224,49 +226,37 @@ fun ChildDashboard(
 }
 
 @Composable
-fun UseCaseCard(title: String, onClick: () -> Unit) {
-    Column(
+fun UseCaseCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .height(160.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(modifier = Modifier
-            .height(120.dp)
-            .fillMaxWidth(), contentAlignment = Alignment.Center) {
-             Text("Illustration", color = MaterialTheme.colorScheme.primary)
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(12.dp),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(title, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), androidx.compose.foundation.shape.CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 20.sp)
         }
-    }
-}
-
-@Composable
-fun RoleSelectionScreen(onRoleSelected: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Who Uses This Device?", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        UseCaseCard(title = "Parent", onClick = { onRoleSelected("parent") })
-        Spacer(modifier = Modifier.height(32.dp))
-        UseCaseCard(title = "Child", onClick = { onRoleSelected("child") })
     }
 }
 
@@ -335,12 +325,7 @@ fun PermissionScreen(role: String, onPermissionsGranted: () -> Unit) {
     val allGranted = notifGranted && adminGranted && accessGranted && locationPermissionState.allPermissionsGranted && cameraPermissionState.allPermissionsGranted && overlayGranted && writeSettingsGranted
     var showWarning by remember { mutableStateOf(false) }
 
-    // Auto-proceed if all granted, but user can also click continue manually
-    androidx.compose.runtime.LaunchedEffect(allGranted) {
-        if (allGranted) {
-            onPermissionsGranted()
-        }
-    }
+    // Removed auto-proceed so user can navigate back without getting trapped
 
     Column(
         modifier = Modifier
@@ -498,19 +483,35 @@ fun PermissionItem(title: String, description: String, isGranted: Boolean, onGra
 }
 
 @Composable
-fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () -> Unit) {
-    var acceptedTerms by remember { mutableStateOf(false) }
-    val pairCode = remember { viewModel.generatePairCode() }
-    var enteredCode by remember { mutableStateOf("") }
+fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () -> Unit, onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val sharedPrefs = remember { context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE) }
+    var acceptedTerms by remember { mutableStateOf(sharedPrefs.getBoolean("accepted_terms", false)) }
+    
+    var isGenerating by remember { mutableStateOf(false) }
+    var cooldownSeconds by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
+    
+    var pairCode by remember { mutableStateOf(viewModel.generatePairCode()) }
+    var enteredCode by remember { mutableStateOf("") }
+    
     val qrLauncher = rememberLauncherForActivityResult(com.journeyapps.barcodescanner.ScanContract()) { result ->
         if (result.contents != null) {
             enteredCode = result.contents
         }
     }
+    
+    LaunchedEffect(cooldownSeconds) {
+        if (cooldownSeconds > 0) {
+            kotlinx.coroutines.delay(1000)
+            cooldownSeconds--
+        }
+    }
+    
     if (!acceptedTerms) {
+        androidx.activity.compose.BackHandler { onBack() }
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = onBack,
             title = { Text("Read Carefully", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold) },
             text = {
                 Column {
@@ -521,16 +522,27 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
             },
             confirmButton = {
                 Button(
-                    onClick = { acceptedTerms = true },
+                    onClick = { 
+                        sharedPrefs.edit().putBoolean("accepted_terms", true).apply()
+                        acceptedTerms = true 
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Accept", color = MaterialTheme.colorScheme.onPrimary)
                 }
             },
+            dismissButton = {
+                TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                    Text("Decline", color = MaterialTheme.colorScheme.onSurface)
+                }
+            },
             containerColor = MaterialTheme.colorScheme.surface
         )
+    } else {
+        androidx.activity.compose.BackHandler { onBack() }
     }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -552,12 +564,23 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
             ) {
                 if (role == "child") {
                     val qrBitmap = remember(pairCode) { generateQrBitmap(pairCode) }
-                    if (qrBitmap != null) {
+                    if (isGenerating) {
+                        Box(
+                            modifier = Modifier.size(150.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Generating...", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
+                    } else if (qrBitmap != null) {
                         Image(
                             bitmap = qrBitmap.asImageBitmap(),
                             contentDescription = "QR Code",
                             modifier = Modifier.size(150.dp)
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Your Pair Code: $pairCode", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
                     } else {
                         Box(
                             modifier = Modifier.size(120.dp).background(MaterialTheme.colorScheme.surfaceVariant),
@@ -565,13 +588,12 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                         ) {
                             Text("QR CODE", color = MaterialTheme.colorScheme.onSurface)
                         }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Your Pair Code: $pairCode", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Your Pair Code: $pairCode", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
-                    Text("Code expires in 10 mins", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(16.dp))
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(
@@ -580,10 +602,11 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                                 val clipData = android.content.ClipData.newPlainText("Pair Code", pairCode)
                                 clipboardManager.setPrimaryClip(clipData)
                                 android.widget.Toast.makeText(context, "Copied to clipboard", android.widget.Toast.LENGTH_SHORT).show()
-                            }
+                            },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text("Copy")
                         }
                         Button(
@@ -594,11 +617,37 @@ fun ShareNotificationScreen(role: String, viewModel: AppViewModel, onPaired: () 
                                     type = "text/plain"
                                 }
                                 context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Pair Code"))
-                            }
+                            },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = "Share")
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text("Share")
+                        }
+                        Button(
+                            onClick = {
+                                if (cooldownSeconds == 0) {
+                                    scope.launch {
+                                        isGenerating = true
+                                        kotlinx.coroutines.delay(1500) // Loading animation duration
+                                        pairCode = viewModel.refreshPairCode()
+                                        isGenerating = false
+                                        cooldownSeconds = 60
+                                    }
+                                } else {
+                                    android.widget.Toast.makeText(context, "Please wait $cooldownSeconds seconds", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            enabled = cooldownSeconds == 0 && !isGenerating,
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            if (isGenerating) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Refresh, contentDescription = "Refresh", modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (cooldownSeconds > 0) "${cooldownSeconds}s" else "Refresh")
                         }
                     }
                 } else {

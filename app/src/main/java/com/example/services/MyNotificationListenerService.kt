@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.first
 
 class MyNotificationListenerService : NotificationListenerService() {
 
@@ -48,14 +49,11 @@ class MyNotificationListenerService : NotificationListenerService() {
                 val devices = db.appDao().getPairedDevicesSync()
                 val childDevice = devices.firstOrNull { it.role == "child" }
                 if (childDevice != null && childDevice.isConnected) {
-                    val configSnapshot = firebaseRepository.db.collection("devices").document(childDevice.pairCode).get().await()
-                    if (configSnapshot.exists()) {
-                        val config = configSnapshot.toObject(com.example.data.DeviceConfig::class.java)
-                        if (config != null) {
-                            val appInfo = config.installedApps.find { it.packageName == packageName }
-                            if (appInfo != null && !appInfo.notificationsEnabled) {
-                                return@launch
-                            }
+                    val config = firebaseRepository.syncDeviceConfig(childDevice.pairCode).first()
+                    if (config != null) {
+                        val appInfo = config.installedApps.find { it.packageName == packageName }
+                        if (appInfo != null && !appInfo.notificationsEnabled) {
+                            return@launch
                         }
                     }
                     val log = NotificationLog(appName = appName, content = content, timestamp = System.currentTimeMillis())

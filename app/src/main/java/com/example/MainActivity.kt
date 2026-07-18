@@ -31,13 +31,17 @@ class MainActivity : ComponentActivity() {
         null
     }
     
-    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
-    if (auth?.currentUser == null) {
-        auth?.signInAnonymously()?.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                android.util.Log.e("MainActivity", "Anonymous auth failed", task.exception)
+    try {
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            auth.signInAnonymously().addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    android.util.Log.e("MainActivity", "Anonymous auth failed", task.exception)
+                }
             }
         }
+    } catch (e: Exception) {
+        android.util.Log.e("MainActivity", "Firebase auth skipped", e)
     }
     
     setContent {
